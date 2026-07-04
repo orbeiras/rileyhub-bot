@@ -7,8 +7,8 @@ Mensagens, estados da conversa e constantes do bot.
 # ==========================================================
 
 WELCOME_TEXT = (
-    "Toda memória começa com uma ideia.\n\n"
-
+    "Toda memória começa com uma ideia. Compartilhe-as conosco.\n\n"
+    
 )
 
 # ==========================================================
@@ -90,5 +90,6 @@ CANCEL_CALLBACK = "cancelar"
     CONFIRM,
 ) = range(7)
 SUGGESTION_LABELS = {
-   callback: label
-   for callback, label in SUGGESTION_TYPES
+    callback: label
+    for callback, label in SUGGESTION_TYPES
+}
