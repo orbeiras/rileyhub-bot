@@ -12,29 +12,18 @@ from constants import (
 
 
 def build_main_menu() -> InlineKeyboardMarkup:
-    """
-    Cria o menu principal com as categorias de sugestão.
-    """
+    """Cria o menu principal."""
 
-    keyboard = []
-
-    for callback, label in SUGGESTION_TYPES:
-        keyboard.append(
-            [
-                InlineKeyboardButton(
-                    text=label,
-                    callback_data=callback,
-                )
-            ]
-        )
+    keyboard = [
+        [InlineKeyboardButton(label, callback_data=callback)]
+        for callback, label in SUGGESTION_TYPES
+    ]
 
     return InlineKeyboardMarkup(keyboard)
 
 
 def build_confirmation_keyboard() -> InlineKeyboardMarkup:
-    """
-    Botões exibidos antes de salvar a sugestão.
-    """
+    """Botões de confirmação."""
 
     keyboard = [
         [
