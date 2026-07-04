@@ -27,7 +27,7 @@ def initialize_csv():
         writer.writerow(CSV_HEADERS)
 
 
-def save_suggestion()
+def save_suggestion(
     username,
     suggestion_type,
     project,
