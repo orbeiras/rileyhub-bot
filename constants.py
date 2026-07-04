@@ -89,3 +89,6 @@ CANCEL_CALLBACK = "cancelar"
     NOTES,
     CONFIRM,
 ) = range(7)
+SUGGESTION_LABELS = {
+   callback: label
+   for callback, label in SUGGESTION_TYPES
