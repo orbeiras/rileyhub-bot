@@ -24,21 +24,31 @@ from constants import (
     CONFIRM,
     WELCOME_TEXT,
     ASK_PROJECT,
+    ASK_CATEGORY,
+    ASK_CHARACTER,
+    ASK_ACTOR,
+    ASK_NOTES,
+    SUMMARY_TITLE,
+    SUCCESS_MESSAGE,
+    CANCEL_MESSAGE,
+    CONFIRM_CALLBACK,
+    CANCEL_CALLBACK,
     SUGGESTION_LABELS,
 )
 
-from keyboards import build_main_menu
+from keyboards import (
+    build_main_menu,
+    build_confirmation_keyboard,
+)
+
+from storage import save_suggestion
 
 
 # ==========================================================
 # /start
 # ==========================================================
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Inicia o bot e exibe o menu principal.
-    """
-
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data.clear()
 
     await update.message.reply_text(
@@ -50,11 +60,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # ==========================================================
-# MENU PRINCIPAL
+# MENU
 # ==========================================================
 
-async def menu_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
+async def menu_choice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
 
@@ -62,12 +71,12 @@ async def menu_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     context.user_data["suggestion_type"] = suggestion_type
     context.user_data["suggestion_label"] = (
-        SUGGESTION_LABELS[suggestion_type]
+        SUGGESTION_LABELS.get(suggestion_type, suggestion_type)
     )
 
     await query.edit_message_text(
         f"Você selecionou:\n\n"
-        f"{SUGGESTION_LABELS[suggestion_type]}\n\n"
+        f"{context.user_data['suggestion_label']}\n\n"
         f"{ASK_PROJECT}"
     )
 
@@ -75,31 +84,10 @@ async def menu_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # ==========================================================
-# CANCELAR
+# PROJETO
 # ==========================================================
 
-async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    context.user_data.clear()
-
-    await update.message.reply_text(
-        "Solicitação cancelada."
-    )
-
-    return ConversationHandler.END
-  from constants import (
-    ASK_CATEGORY,
-    ASK_CHARACTER,
-    ASK_ACTOR,
-    ASK_NOTES,
-)
-
-# ==========================================================
-# NOME DO PROJETO
-# ==========================================================
-
-async def ask_category(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
+async def ask_category(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data["project"] = update.message.text.strip()
 
     await update.message.reply_text(
@@ -113,8 +101,7 @@ async def ask_category(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # CATEGORIA
 # ==========================================================
 
-async def ask_character(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
+async def ask_character(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data["category"] = update.message.text.strip()
 
     await update.message.reply_text(
@@ -128,8 +115,7 @@ async def ask_character(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # PERSONAGEM
 # ==========================================================
 
-async def ask_actor(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
+async def ask_actor(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     character = update.message.text.strip()
 
     if character == "-":
@@ -148,8 +134,7 @@ async def ask_actor(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ATOR / ATRIZ
 # ==========================================================
 
-async def ask_notes(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
+async def ask_notes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     actor = update.message.text.strip()
 
     if actor == "-":
@@ -162,24 +147,13 @@ async def ask_notes(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     return NOTES
-  from constants import (
-    SUMMARY_TITLE,
-    SUCCESS_MESSAGE,
-    CANCEL_MESSAGE,
-    CONFIRM_CALLBACK,
-    CANCEL_CALLBACK,
-)
-
-from keyboards import build_confirmation_keyboard
-from storage import save_suggestion
 
 
 # ==========================================================
 # OBSERVAÇÕES
 # ==========================================================
 
-async def show_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
+async def show_summary(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     notes = update.message.text.strip()
 
     if notes == "-":
@@ -206,16 +180,14 @@ async def show_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # ==========================================================
-# CONFIRMAÇÃO
+# CONFIRMAR
 # ==========================================================
 
-async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
+async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
 
     if query.data == CANCEL_CALLBACK:
-
         context.user_data.clear()
 
         await query.edit_message_text(
@@ -252,75 +224,75 @@ async def confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # ==========================================================
-# CONVERSATION HANDLER
+# CANCELAR
 # ==========================================================
 
-def build_conversation_handler():
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    context.user_data.clear()
 
+    await update.message.reply_text(
+        CANCEL_MESSAGE
+    )
+
+    return ConversationHandler.END
+
+
+# ==========================================================
+# HANDLER
+# ==========================================================
+
+def build_conversation_handler() -> ConversationHandler:
     return ConversationHandler(
-
         entry_points=[
-            CommandHandler(
-                "start",
-                start,
-            )
+            CommandHandler("start", start),
         ],
-
         states={
-
             MENU: [
                 CallbackQueryHandler(
-                    menu_choice
+                    menu_choice,
+                    pattern="^(scenepack|stickers|emojis|divisorias)$",
                 )
             ],
-
             PROJECT: [
                 MessageHandler(
                     filters.TEXT & ~filters.COMMAND,
                     ask_category,
                 )
             ],
-
             CATEGORY: [
                 MessageHandler(
                     filters.TEXT & ~filters.COMMAND,
                     ask_character,
                 )
             ],
-
             CHARACTER: [
                 MessageHandler(
                     filters.TEXT & ~filters.COMMAND,
                     ask_actor,
                 )
             ],
-
             ACTOR: [
                 MessageHandler(
                     filters.TEXT & ~filters.COMMAND,
                     ask_notes,
                 )
             ],
-
             NOTES: [
                 MessageHandler(
                     filters.TEXT & ~filters.COMMAND,
                     show_summary,
                 )
             ],
-
             CONFIRM: [
                 CallbackQueryHandler(
                     confirm,
                     pattern=f"^({CONFIRM_CALLBACK}|{CANCEL_CALLBACK})$",
                 )
             ],
-
         },
-
         fallbacks=[
             CommandHandler(
-                "cancel",
+                "cancelar",
                 cancel,
             )
         ],
